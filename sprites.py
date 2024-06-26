@@ -1,6 +1,7 @@
 # sprites.py
 import pygame
-from config import WHITE, BLUE, YELLOW, TILE_SIZE, BULLET_SPEED
+import random
+from config import WHITE, BLUE, YELLOW, RED, TILE_SIZE, BULLET_SPEED, ENEMY_SPEED
 
 class Player(pygame.sprite.Sprite):
     def __init__(self, x, y, screen_width, screen_height):
@@ -90,6 +91,7 @@ class Platform(pygame.sprite.Sprite):
         self.rect.x = x
         self.rect.y = y
 
+# New class for the bullet sprite
 class Bullet(pygame.sprite.Sprite):
     def __init__(self, x, y, direction):
         super().__init__()
@@ -109,3 +111,45 @@ class Bullet(pygame.sprite.Sprite):
             if self.rect.colliderect(platform.rect):
                 self.kill()  # Remove the bullet if it hits a platform
                 break
+
+# New class for the eneme sprite
+class Enemy(pygame.sprite.Sprite):
+    def __init__(self, x, y):
+        super().__init__()
+        self.image = pygame.Surface([40, 40])
+        self.image.fill(RED)
+        self.rect = self.image.get_rect()
+        self.rect.x = x
+        self.rect.y = y
+        self.speed = ENEMY_SPEED
+        self.direction = 1  # 1 for right, -1 for left
+        self.velocity_y = 0
+        self.steps = 0
+        self.gravity = 0.8
+        self.max_steps = 4 * TILE_SIZE  # 4 tiles worth of movement
+
+    def apply_gravity(self):
+        self.velocity_y += self.gravity
+
+    def update(self, platforms):
+        self.apply_gravity() # Taken from player logic - not working
+
+        # Horizontal movement
+        self.rect.x += self.speed * self.direction
+        self.steps += abs(self.speed)
+
+        # Screen boundary check
+        self.rect.x = max(0, min(800 - self.rect.width, self.rect.x))
+
+        # Change direction after moving max_steps
+        if self.steps >= self.max_steps:
+            self.direction *= -1
+            self.steps = 0
+
+    def check_bullet_collision(self, bullets):
+        for bullet in bullets:
+            if self.rect.colliderect(bullet.rect):
+                self.kill()
+                bullet.kill()  
+                return True
+        return False
